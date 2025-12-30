@@ -1,0 +1,57 @@
+{
+  "broker_api_end_points": {
+    "BNRathi": {
+      "host": "https://prime.bnrsecurities.com/NorenWClientTP",
+      "websocket": "wss://prime.bnrsecurities.com/NorenWSTP/"
+    },
+    "Finvasia": {
+      "host": "https://api.shoonya.com/NorenWClientTP",
+      "websocket": "wss://api.shoonya.com/NorenWSTP/"
+    },
+    "Zebu": {
+      "host": "https://go.mynt.in/NorenWClientTP",
+      "websocket": "wss://go.mynt.in/NorenWSWeb/"
+    },
+    "FlatTrade": {
+      "host": "https://piconnect.flattrade.in/PiConnectTP/",
+      "websocket": "wss://piconnect.flattrade.in/PiConnectWSTp/",
+      "eodhost": "https://web.flattrade.in/chartApi/getdata/"
+    },
+    "Iiflxts": {
+      "host": "https://ttblaze.iifl.com"
+    },
+    "Compxts": {
+      "host": "https://xts.compositedge.com"
+    },
+    "Maitra": {
+      "host": "https://xts.maitracommodities.com:3000/#!/app"
+    },
+    "Firstock": {
+      "host": "https://api.firstock.in/V1"
+    },
+    "CFirstock": {
+      "host": "https://api.firstock.in/V1"
+    },
+    "Firststock": {
+      "host": "https://connect.thefirstock.com/api/V4"
+    },
+    "ACAgarwal": {
+      "host": "https://symphony.acagarwal.com:3000"
+    },
+    "Jainam": {
+      "host": "http://ctrade.jainam.in:5000/dashboard#!/app"
+    },
+    "Jainamprop": {
+      "host": "http://ctrade.jainam.in:3001"
+    },
+    "JainampropA": {
+      "host": "http://ctrade.jainam.in:3000"
+    },
+    "Parasramprop": {
+      "host": "https://webtrade.parasramindia.com"
+    },
+    "Smcindia": {
+      "host": "https://tradex.smcindiaonline.com"
+    }
+  }
+}
