@@ -1,0 +1,12 @@
+{
+  "users": [
+    {
+      "userid": "YOUR_USER_ID",
+      "name": "YOUR_NAME",
+      "original_host_ip": "YOUR_HOST_IP",
+      "user_password": "YOUR_PASSWORD",
+      "added_at": "2025-12-30T14:51:55.538603",
+      "status": "active"
+    }
+  ]
+}

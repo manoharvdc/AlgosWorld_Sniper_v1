@@ -1,7 +1,12 @@
 import ast
 import hashlib
+import os
+from dotenv import load_dotenv
 
 import requests
+
+# Load environment variables from .env file
+load_dotenv()
 
 BASE_URL = "http://127.0.0.1:9000/Firstock"  # Base URL of the FastAPI server
 
@@ -169,13 +174,29 @@ def test_get_quote():
 
 def init_user():
     global user_details
-    encryptedPassword = encode_pwd("Dharma@123")
+    
+    # Load credentials from environment variables
+    user_id = os.getenv("FS_USER_ID")
+    password = os.getenv("FS_PASSWORD")
+    totp = os.getenv("FS_TOTP")
+    vendor_code = os.getenv("FS_VENDOR_CODE")
+    api_key = os.getenv("FS_API_KEY")
+    
+    # Check if all required environment variables are set
+    if not all([user_id, password, totp, vendor_code, api_key]):
+        raise ValueError(
+            "Missing required environment variables. Please ensure the following are set:\n"
+            "FS_USER_ID, FS_PASSWORD, FS_TOTP, FS_VENDOR_CODE, FS_API_KEY\n"
+            "Copy .env.example to .env and fill in your credentials."
+        )
+    
+    encryptedPassword = encode_pwd(password)
     user_details = {
-        "userId": "SR1052",
+        "userId": user_id,
         "password": encryptedPassword.hexdigest(),
-        "TOTP": "1952",
-        "vendorCode": "SR1052_API",
-        "apiKey": "daa6222dcead7763749c9ff709cf5da3"
+        "TOTP": totp,
+        "vendorCode": vendor_code,
+        "apiKey": api_key
     }
 
 
