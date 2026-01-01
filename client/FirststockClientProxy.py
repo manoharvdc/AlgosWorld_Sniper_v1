@@ -17,6 +17,7 @@ stats = {
     "total_requests": 0,
     "by_broker": defaultdict(int),
     "by_method": defaultdict(int),
+    "by_action": defaultdict(int),
     "by_status": defaultdict(int),
     "start_time": datetime.now().isoformat(),
     "last_request_time": None,
@@ -116,6 +117,7 @@ async def get_stats():
         "total_requests": stats["total_requests"],
         "by_broker": dict(stats["by_broker"]),
         "by_method": dict(stats["by_method"]),
+        "by_action": dict(stats["by_action"]),
         "by_status": {str(k): v for k, v in stats["by_status"].items()},
         "start_time": stats["start_time"],
         "last_request_time": stats["last_request_time"],
@@ -137,6 +139,7 @@ async def reset_stats():
     stats["total_requests"] = 0
     stats["by_broker"].clear()
     stats["by_method"].clear()
+    stats["by_action"].clear()
     stats["by_status"].clear()
     stats["start_time"] = datetime.now().isoformat()
     stats["last_request_time"] = None
@@ -295,6 +298,7 @@ async def xts_proxy(broker: str, action: str, request: Request):
     stats["total_requests"] += 1
     stats["by_broker"][broker] += 1
     stats["by_method"][request.method] += 1
+    stats["by_action"][action] += 1
     stats["last_request_time"] = request_received_time.isoformat()
     stats["last_request_received"] = request_received_time.isoformat()
     
