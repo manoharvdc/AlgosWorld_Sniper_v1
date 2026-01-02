@@ -765,11 +765,12 @@
                     parseError = 'data.data or data.data.response not found';
                 }
                 
-                // Extract balance, positions, orders
+                // Extract balance, positions, orders, capital
                 const balance = parsedData?.balance || [];
                 const positions = parsedData?.positions || [];
                 const orders = parsedData?.orders || [];
                 const strategies = parsedData?.strategies || [];
+                const capital = parsedData?.capital || 0;
                 const reason = parsedData?.reason || '';
                 const errorMsg = data.error || reason;
                 
@@ -864,6 +865,11 @@
                         </div>
                         
                         ${errorMsg ? `<div style="background: #fee2e2; border-left: 4px solid #ef4444; padding: 10px; margin: 10px 0; border-radius: 5px; color: #991b1b;"><strong>⚠️ Error:</strong> ${errorMsg}</div>` : ''}
+                        
+                        ${capital > 0 ? `<div style="background: linear-gradient(135deg, #e0e7ff 0%, #ddd6fe 100%); padding: 10px; margin: 10px 0; border-radius: 6px; text-align: center; border: 1px solid #c7d2fe;">
+                            <div style="font-size: 0.85em; color: #4c1d95; margin-bottom: 3px;">💼 Algos Used Capital</div>
+                            <div style="font-size: 1.5em; font-weight: bold; color: #5b21b6;">₹${capital.toLocaleString('en-IN')}</div>
+                        </div>` : ''}
                         
                         ${strategies.length > 0 ? `<div style="margin: 10px 0;"><strong>Active Strategies:</strong> ${strategies.join(', ')}</div>` : ''}
                         

@@ -2,6 +2,9 @@ import logging
 import os
 import traceback
 import json
+import csv
+import asyncio
+from contextlib import asynccontextmanager
 from datetime import datetime
 from collections import defaultdict
 from typing import Dict
@@ -10,7 +13,8 @@ import httpx
 from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import HTMLResponse, JSONResponse
 
-app = FastAPI()
+# Background task control
+stats_logger_task = None
 
 # Statistics tracking
 stats = {
@@ -94,6 +98,110 @@ user_configs = load_user_config()
 
 # Track last request time for each user (for rate limiting)
 user_last_request_time = {}
+
+# Optimize CSV logging - compute paths once at startup
+_ROOT_DIRECTORY = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+_STATS_FOLDER = os.path.join(_ROOT_DIRECTORY, "logs")
+os.makedirs(_STATS_FOLDER, exist_ok=True)  # Create once at startup
+
+# Track current stats file to avoid repeated checks
+_current_stats_file = None
+_current_stats_date = None
+_headers_written = False
+
+
+def save_stats_to_csv():
+    """Save current statistics to CSV file with timestamp"""
+    global _current_stats_file, _current_stats_date, _headers_written
+    
+    try:
+        # Check if date has changed (for new file creation at midnight)
+        current_date = datetime.now().strftime("%Y-%m-%d")
+        
+        if current_date != _current_stats_date:
+            # New day - create new file path and reset header flag
+            _current_stats_date = current_date
+            _current_stats_file = os.path.join(_STATS_FOLDER, f"stats_{current_date}.csv")
+            _current_stats_date = current_date
+            _current_stats_file = os.path.join(_STATS_FOLDER, f"stats_{current_date}.csv")
+            _headers_written = os.path.isfile(_current_stats_file)  # Check once per day
+        
+        # Prepare row data
+        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        uptime_seconds = (datetime.now() - datetime.fromisoformat(stats["start_time"])).total_seconds()
+        
+        row_data = {
+            "timestamp": timestamp,
+            "total_requests": stats["total_requests"],
+            "success": stats["success"],
+            "errors": stats["errors"],
+            "avg_response_time_ms": round(stats["avg_response_time_ms"], 2) if stats["total_requests"] > 0 else 0,
+            "min_response_time_ms": round(stats["min_response_time_ms"], 2) if stats["min_response_time_ms"] is not None else 0,
+            "max_response_time_ms": round(stats["max_response_time_ms"], 2) if stats["max_response_time_ms"] is not None else 0,
+            "uptime_seconds": round(uptime_seconds, 2),
+            "by_broker": json.dumps(dict(stats["by_broker"])),
+            "by_method": json.dumps(dict(stats["by_method"])),
+            "by_action": json.dumps(dict(stats["by_action"])),
+            "by_status": json.dumps({str(k): v for k, v in stats["by_status"].items()})
+        }
+        
+        # Write to CSV
+        with open(_current_stats_file, 'a', newline='', encoding='utf-8') as f:
+            fieldnames = list(row_data.keys())
+            writer = csv.DictWriter(f, fieldnames=fieldnames)
+            
+            # Write header only if not written yet
+            if not _headers_written:
+                writer.writeheader()
+                _headers_written = True
+                logger.info(f"Created new stats CSV file: {_current_stats_file}")
+            
+            writer.writerow(row_data)
+        
+        logger.info(f"Saved stats to {_current_stats_file} at {timestamp}")
+        
+    except Exception as e:
+        logger.error(f"Error saving stats to CSV: {e}")
+
+
+async def stats_logger_loop():
+    """Background task that saves stats every minute"""
+    logger.info("Stats logger background task started")
+    while True:
+        try:
+            await asyncio.sleep(60)  # Wait 60 seconds
+            save_stats_to_csv()
+        except asyncio.CancelledError:
+            logger.info("Stats logger task cancelled")
+            break
+        except Exception as e:
+            logger.error(f"Error in stats logger loop: {e}")
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Manage application lifespan - startup and shutdown"""
+    global stats_logger_task
+    
+    # Startup
+    stats_logger_task = asyncio.create_task(stats_logger_loop())
+    logger.info("Server startup complete - background stats logger started")
+    
+    yield
+    
+    # Shutdown
+    if stats_logger_task:
+        stats_logger_task.cancel()
+        try:
+            await stats_logger_task
+        except asyncio.CancelledError:
+            pass
+    # Save final stats before shutdown
+    save_stats_to_csv()
+    logger.info("Server shutdown - final stats saved")
+
+
+app = FastAPI(lifespan=lifespan)
 
 
 def get_broker_root_api(api_name):
